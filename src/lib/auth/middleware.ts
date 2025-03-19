@@ -44,6 +44,7 @@ export async function authenticateRequest(
 
     return authenticatedReq;
   } catch (error) {
+    console.error(error)
     return NextResponse.json(
       { error: 'Unauthorized - Invalid token' },
       { status: 401 }

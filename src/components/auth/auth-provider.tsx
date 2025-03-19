@@ -12,14 +12,12 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (token: string) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
-  login: () => {},
   logout: () => {},
 });
 
@@ -30,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check for token and fetch user profile on initial load
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('access_token');
     
     if (!token) {
       return;
@@ -53,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(error => {
         console.error('Authentication error:', error);
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('access_token');
       });
   }, []);
 
@@ -62,14 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Skip redirect checks on initial render
     if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('access_token');
     const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname === '/reset-password';
     const isProtectedRoute = 
-      pathname.startsWith('/dashboard') || 
-      pathname.startsWith('/entries') || 
-      pathname.startsWith('/categories') ||
-      pathname.startsWith('/insights');
-    
+      pathname.startsWith('/dashboard')
     // Redirect authenticated users away from auth routes
     if (token && isAuthRoute) {
       router.push('/dashboard');
@@ -83,33 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [pathname, router, user]);
 
-  const login = (token: string) => {
-    localStorage.setItem('auth_token', token);
-    
-    // Fetch user profile immediately
-    fetch('/api/auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch user');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setUser(data.user);
-        router.push('/dashboard');
-      })
-      .catch(error => {
-        console.error('Authentication error:', error);
-        localStorage.removeItem('auth_token');
-      });
-  };
-
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    console.log("loging out...")
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     setUser(null);
     router.push('/login');
   };
@@ -119,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
-        login,
         logout,
       }}
     >

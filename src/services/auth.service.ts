@@ -14,6 +14,7 @@ if (!process.env.CSRF_SECRET) {
 const JWT_SECRET = process.env.JWT_SECRET;
 const CSRF_SECRET = process.env.CSRF_SECRET;
 const JWT_EXPIRES_IN = '15m'; // JWT expires in 15 minutes
+const JWT_REFRESH_EXPIRES_IN = '7d';
 const SALT_ROUNDS = 10;
 
 export interface TokenPayload {
@@ -81,11 +82,6 @@ export class AuthService {
     const csrfToken = this.generateCSRFToken();
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
       token,
       csrfToken,
     };
@@ -94,8 +90,14 @@ export class AuthService {
   /**
    * Generate JWT token
    */
-  generateToken(payload: TokenPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  generateToken(payload: TokenPayload): { access: string, refresh: string } {
+    // Generate Access Token
+    const access = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+    // Generate Refresh Token
+    const refresh = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
+
+    return { access, refresh };
   }
 
   /**

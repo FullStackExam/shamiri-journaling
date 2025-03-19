@@ -59,12 +59,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = loginSchema.parse(body);
     
-    const { user, token, csrfToken } = await authService.login(validatedData);
+    const { token, csrfToken } = await authService.login(validatedData);
     
-    const res = NextResponse.json({ user });
+    const res = NextResponse.json(token);
     
     // Set HTTP-only cookies
-    authService.setAuthCookies(res, token, csrfToken);
+    authService.setAuthCookies(res, token.access, csrfToken);
 
     return res;
   } catch (error) {

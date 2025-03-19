@@ -50,7 +50,8 @@ export  function LoginForm() {
       }
 
       // Store token in localStorage
-      localStorage.setItem("auth_token", result.token)
+      localStorage.setItem("access_token", result.access)
+      localStorage.setItem("refresh_token", result.refresh)
 
       // Redirect to dashboard on success
       router.push("/dashboard")
