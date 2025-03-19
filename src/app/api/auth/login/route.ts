@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@/services/auth.service';
 import { loginSchema } from '@/lib/validation/auth';
 import { ZodError } from 'zod';
+import { verifyCSRF } from '@/lib/auth/middleware'; 
 
 /**
  * @swagger
@@ -51,15 +52,21 @@ import { ZodError } from 'zod';
  */
 export async function POST(req: NextRequest) {
   try {
+    const csrfError = await verifyCSRF(req);
+    if (csrfError instanceof NextResponse) {
+      return csrfError;
+    }
     const body = await req.json();
     const validatedData = loginSchema.parse(body);
+    
+    const { user, token, csrfToken } = await authService.login(validatedData);
+    
+    const res = NextResponse.json({ user });
+    
+    // Set HTTP-only cookies
+    authService.setAuthCookies(res, token, csrfToken);
 
-    const { user, token } = await authService.login(validatedData);
-
-    return NextResponse.json({
-      user,
-      token,
-    });
+    return res;
   } catch (error) {
     console.error('Login error:', error);
 

@@ -1,14 +1,19 @@
 import { compare, hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma/client';
-import { LoginInput, RegisterInput } from '@/lib/validation/auth';
+import { RegisterInput, LoginInput } from '@/lib/validation/auth';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in environment variables');
 }
 
+if (!process.env.CSRF_SECRET) {
+  throw new Error('CSRF_SECRET is not defined in environment variables');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '15m';
+const CSRF_SECRET = process.env.CSRF_SECRET;
+const JWT_EXPIRES_IN = '15m'; // JWT expires in 15 minutes
 const SALT_ROUNDS = 10;
 
 export interface TokenPayload {
@@ -22,7 +27,6 @@ export class AuthService {
    * Register a new user
    */
   async register(input: RegisterInput) {
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: input.email },
     });
@@ -33,17 +37,15 @@ export class AuthService {
 
     const passwordHash = await hash(input.password, SALT_ROUNDS);
 
-    // Create new user
     const user = await prisma.user.create({
       data: {
         email: input.email,
         passwordHash,
         name: input.name,
-        preferences: {}
+        preferences: {},
       },
     });
 
-    // Return user
     return {
       id: user.id,
       email: user.email,
@@ -56,7 +58,6 @@ export class AuthService {
    * Login user with email and password
    */
   async login(input: LoginInput) {
-    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: input.email },
     });
@@ -65,21 +66,20 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
-    // Check password
     const passwordMatch = await compare(input.password, user.passwordHash);
 
     if (!passwordMatch) {
       throw new Error('Invalid credentials');
     }
 
-    // Generate JWT token
     const token = this.generateToken({
       id: user.id,
       email: user.email,
       name: user.name,
     });
 
-    // Return user and token
+    const csrfToken = this.generateCSRFToken();
+
     return {
       user: {
         id: user.id,
@@ -87,7 +87,43 @@ export class AuthService {
         name: user.name,
       },
       token,
+      csrfToken,
     };
+  }
+
+  /**
+   * Generate JWT token
+   */
+  generateToken(payload: TokenPayload): string {
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  }
+
+  /**
+   * Generate CSRF token
+   */
+  generateCSRFToken(): string {
+    return jwt.sign({}, CSRF_SECRET, { expiresIn: '1d' });
+  }
+
+  /**
+   * Set JWT and CSRF token as cookies (HTTP-only)
+   */
+  setAuthCookies(res: any, token: string, csrfToken: string) {
+    res.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,  // 1 week expiration
+      path: '/',
+      sameSite: 'Strict',  // Recommended for security
+    });
+
+    res.cookies.set('csrf_token', csrfToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24,  // 1 day expiration
+      path: '/',
+      sameSite: 'Strict',  // Recommended for security
+    });
   }
 
   /**
@@ -95,20 +131,10 @@ export class AuthService {
    */
   verifyToken(token: string): TokenPayload {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
-      return decoded;
+      return jwt.verify(token, JWT_SECRET) as TokenPayload;
     } catch (error) {
-      throw new Error('Invalid token');
+      throw new Error('Invalid or expired token');
     }
-  }
-
-  /**
-   * Generate JWT token
-   */
-  generateToken(payload: TokenPayload): string {
-    return jwt.sign(payload, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
   }
 
   /**
@@ -131,6 +157,5 @@ export class AuthService {
     };
   }
 }
-
-// singleton instance
+// singleton
 export const authService = new AuthService();

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@/services/auth.service';
 import { registerSchema } from '@/lib/validation/auth';
 import { ZodError } from 'zod';
+import { verifyCSRF } from '@/lib/auth/middleware'; 
 
 /**
  * @swagger
@@ -49,8 +50,16 @@ import { ZodError } from 'zod';
  */
 export async function POST(req: NextRequest) {
   try {
+    // Verify CSRF token
+    const csrfError = await verifyCSRF(req);
+    if (csrfError instanceof NextResponse) {
+      return csrfError;
+    }
+    // Parse and validate the body for registration
     const body = await req.json();
     const validatedData = registerSchema.parse(body);
+
+    // Register the user
     const user = await authService.register(validatedData);
 
     return NextResponse.json({ user }, { status: 201 });

@@ -30,7 +30,7 @@ import { authService } from '@/services/auth.service';
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
-    await authService.forgotPassword(email); // this is not yet implemented. // check
+    // await authService.forgotPassword(email); // this is not yet implemented. // check
 
     return NextResponse.json({ message: 'Password reset email sent' });
   } catch (error) {

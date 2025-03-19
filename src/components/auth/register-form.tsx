@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import {fetchCSRFToken} from "@/lib/cookieUtils"
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -40,11 +41,14 @@ export function RegisterForm() {
     }
 
     try {
+      const csrfToken = await fetchCSRFToken();
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
+        credentials: 'include' ,
         body: JSON.stringify(data),
       })
 

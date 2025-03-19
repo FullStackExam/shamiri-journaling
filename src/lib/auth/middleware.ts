@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
+
 import { authService } from '@/services/auth.service';
+
+const CSRF_SECRET = process.env.CSRF_SECRET;
+
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
@@ -62,4 +67,24 @@ export function getAuthUser(
   }
 
   return reqOrRes.user;
+}
+
+
+
+
+const CSRF_COOKIE_NAME = process.env.CSRF_COOKIE_NAME;
+
+export async function verifyCSRF(req: NextRequest) {
+  const csrfTokenFromRequest = req.headers.get('x-csrf-token');
+  const csrfTokenFromCookie = req.cookies.get(CSRF_COOKIE_NAME)?.value??'';
+
+  if (!csrfTokenFromRequest || !csrfTokenFromCookie) {
+    return NextResponse.json({ error: 'CSRF token missing' }, { status: 403 });
+  }
+
+  // Compare the tokens
+  if (csrfTokenFromRequest !== csrfTokenFromCookie) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
+  return null // NextResponse.next();
 }

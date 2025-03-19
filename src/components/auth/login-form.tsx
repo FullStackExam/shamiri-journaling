@@ -13,6 +13,7 @@ import { ArrowLeft, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { loginSchema, LoginInput } from "@/lib/validation/auth"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {fetchCSRFToken} from "@/lib/cookieUtils"
 
 export  function LoginForm() {
   const [error, setError] = useState<string | null>(null)
@@ -32,10 +33,12 @@ export  function LoginForm() {
     setError(null)
 
     try {
+      const csrfToken = await fetchCSRFToken();
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
         body: JSON.stringify(data),
       })
