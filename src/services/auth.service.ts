@@ -1,4 +1,4 @@
-import { compare, hash } from 'bcrypt';
+import { compare, hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma/client';
 import { LoginInput, RegisterInput } from '@/lib/validation/auth';

@@ -1,235 +1,231 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { registerSchema, RegisterInput } from '@/lib/validation/auth';
-import { toast } from 'sonner'; 
-import { CheckCircle2, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import type React from "react"
+import { useState } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function RegisterForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const form = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null) // Reset error message
 
-  // Get form state information
-  const { formState } = form;
-  const { isValid, isDirty } = formState;
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.")
+      setIsLoading(false)
+      return
+    }
 
-  async function onSubmit(data: RegisterInput) {
-    setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+    const formData = new FormData(e.target as HTMLFormElement)
+    const data = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      confirmPassword: formData.get("confirmPassword") as string, // Send confirmPassword
+    }
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (!response.ok) {
         if (response.status === 409) {
-          // Assume conflict results from duplicate email
-          throw new Error('An account with this email already exists');
+          // Conflict (duplicate email)
+          throw new Error("An account with this email already exists")
         }
-        throw new Error(result.error || 'Failed to register account');
+        throw new Error(result.error || "Failed to register account")
       }
 
-      setSuccessMessage('Account created successfully! Redirecting to login...');
-     
-      toast.message('Registration Successful',{
-        'description': 'Your account has been created. You can now log in.',
-      });
+      toast.message("Registration Successful", {
+        description: "Your account has been created. You can now log in.",
+      })
 
-      // Redirect after a short delay for better UX
-      setTimeout(() => {
-        router.push('/login?registered=true');
-      }, 2000);
+      router.push("/login?registered=true")
     } catch (error) {
-      console.error('Registration error:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-      
-      toast.error('Registration Failed',{
-        'description': error instanceof Error ? error.message : 'An unexpected error occurred',
-      });
+      console.error("Registration error:", error)
+      setError(error instanceof Error ? error.message : "An unexpected error occurred")
+
+      toast.error("Registration Failed", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="w-full max-w-md space-y-6 bg-card rounded-lg border p-8 shadow-sm">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Create Your Journal Account</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter your information to start your journaling journey
-        </p>
+    <div className="container mx-auto px-4 py-8 max-w-md">
+      <div className="mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to home
+        </Link>
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold">Create an account</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Start your journaling journey today</p>
+      </div>
 
-      {successMessage && (
-        <Alert variant="default" className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      )}
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="John Doe" 
-                    disabled={isLoading}
-                    autoComplete="name"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="john.doe@example.com" 
-                    type="email" 
-                    disabled={isLoading}
-                    autoComplete="email"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Create a strong password" 
-                    type="password" 
-                    disabled={isLoading}
-                    autoComplete="new-password"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Confirm your password" 
-                    type="password" 
-                    disabled={isLoading}
-                    autoComplete="new-password"
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="pt-2">
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isLoading || (!isDirty || !isValid)}
-            >
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </Button>
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input id="name" name="name" type="text" placeholder="John Doe" required />
           </div>
 
-          <div className="text-center text-sm">
-            <p className="text-muted-foreground">
-              By registering, you agree to our{' '}
-              <Link href="#" className="underline underline-offset-4 hover:text-primary">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="#" className="underline underline-offset-4 hover:text-primary">
-                Privacy Policy
-              </Link>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="********"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-2 flex items-center"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Must be at least 8 characters and include a number and a special character
             </p>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="********"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-2 flex items-center"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5 text-gray-500" /> : <Eye className="h-5 w-5 text-gray-500" />}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-4 text-red-600">
+              <p>{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-left space-x-2">
+            <Checkbox id="terms" required />
+            <Label htmlFor="terms" className="text-sm font-normal">
+              I agree to the{" "}
+              <Link
+                href="#"
+                className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+              >
+                Terms of Service
+              </Link>
+            </Label>
+          </div>
+
+          <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Create account"
+            )}
+          </Button>
         </form>
-      </Form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">
-            Or
-          </span>
-        </div>
-      </div>
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
+            </div>
+          </div>
 
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-primary hover:text-primary/90 underline underline-offset-4">
-            Sign in instead
-          </Link>
-        </p>
+          <div className="mt-6">
+            <Button variant="outline" className="w-full" disabled>
+              <svg
+                className="mr-2 h-4 w-4"
+                aria-hidden="true"
+                focusable="false"
+                data-prefix="fab"
+                data-icon="google"
+                role="img"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 488 512"
+              >
+                <path
+                  fill="currentColor"
+                  d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                ></path>
+              </svg>
+              Google
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center text-sm">
+          <p className="text-gray-500 dark:text-gray-400">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
+            >
+              Log in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
-  );
+  )
 }

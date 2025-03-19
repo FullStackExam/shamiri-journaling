@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthService } from './auth.service';
-import { hash } from 'bcrypt';
+import { hash } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 // Mock prisma client

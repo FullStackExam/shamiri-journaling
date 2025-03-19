@@ -1,40 +1,31 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { Toaster } from 'sonner'
-import './globals.css';
+import type React from "react"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from '@/components/auth/auth-provider';
-import { MainNav } from '@/components/layout/main-nav';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: 'Personal Journal App',
-  description: 'Record, organize, and gain insights from your personal journal',
-};
+export const metadata = {
+  title: "Journaling App",
+  description: "A personal journaling application",
+}
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <MainNav />
-            <main className="flex-1">
-              {children}
-            </main>
-            <footer className="py-6 border-t">
-              <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Personal Journal App
-              </div>
-            </footer>
-          </div>
-          <Toaster />
-        </AuthProvider>
+      <AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
+      </AuthProvider>
       </body>
     </html>
-  );
+  )
 }
+

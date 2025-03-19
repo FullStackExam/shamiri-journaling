@@ -38,7 +38,7 @@ This plan outlines the implementation approach for the Personal Journaling Appli
     - Create entry detail view
     - Unit tests for journal services
 
-#### Day 5: March 21, 2025
+#### Day 5: March 21, 2025 - Categorization
     - Implement basic categorization system schema
     - Create category CRUD operations
     - Build category selector components
