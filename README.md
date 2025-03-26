@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Journaling App
+
+A secure and insightful digital journaling platform that helps users record, organize, and gain meaningful insights from their personal journals.
+
+## Technical Architecture
+
+The Personal Journaling App is built using:
+
+- **Frontend**: Next.js 14 (App Router) with TypeScript and Tailwind CSS
+- **Backend**: Next.js API routes for a unified full-stack experience
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js with JWT strategy
+- **Validation**: Zod for input validation
+- **Testing**: Jest
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18.x or higher
+- pnpm
+- PostgreSQL database
 
+### Installation
+
+1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone git@github.com:FullStackExam/shamiri-journaling.git
+cd shamiri-journaling
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies
+```bash
+pnpm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables
+Create a `.env` file in the root directory from `cp .env.example .env`. Edit the values.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up the database
+```bash
+npx prisma migrate dev
+```
 
-## Learn More
+5. Start the development server
+```bash
+pnpm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### API Documentation
 
-## Deploy on Vercel
+The API documentation is automatically generated using TypeDoc and swagger-jsdoc. To view the documentation:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Access the API documentation at [http://localhost:3000/docs/docs](http://localhost:3000/docs) when the server is running
+
+### Technical Documentation
+
+TypeScript documentation (TSDoc) is available at [/docs](/docs) when the server is running. This documentation provides details about the codebase, interfaces, and implementation details. It can be generated using:
+
+```bash
+pnpm typedoc --entryPointStrategy expand --out docs/typedoc src
+# or for markdown
+pnpm typedoc --plugin typedoc-plugin-markdown --entryPointStrategy expand --out docs src
+```
+
+### Design Files
+
+Design mockups and diagrams are available in the [/design](/design) directory:
+
+These files provide visual references and technical specifications for the application design.
+
+## Testing
+
+Run the test suite with:
+
+```bash
+npx jest
+```
